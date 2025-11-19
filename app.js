@@ -23,6 +23,11 @@ app.get('/alien',(req,res)=>{
     res.send("Hi I am alien");
 })
 
+app.get('/alien/:id',(req,res)=>{
+    const id = req.params.id;
+    res.send(`My rolll is ${id}`)
+})
+
 app.listen(9000,(req,res)=>{
     console.log("Server is running on port 9000");
 });
