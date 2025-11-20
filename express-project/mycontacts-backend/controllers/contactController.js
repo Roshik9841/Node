@@ -1,9 +1,11 @@
+const asyncHandler = require("express-async-handler");
+
 // @desc Get all contacts
 // @route GET /api/contacts
 // @access public
 
 
-const getContacts = ((req,res)=>{
+const getContacts = asyncHandler(async (req,res)=>{
     res.status(200).json("Get all contacts");
 });
 
@@ -12,7 +14,7 @@ const getContacts = ((req,res)=>{
 // @access public
 
 
-const getContact = ((req,res)=>{
+const getContact = asyncHandler( async(req,res)=>{
     const id = req.params.id;
     res.status(200).json("Get  contacts for "+id);
 });
@@ -23,7 +25,7 @@ const getContact = ((req,res)=>{
 // @access public
 
 
-const createContact = ((req,res)=>{
+const createContact =asyncHandler( async(req,res)=>{
     console.log("The req body is", req.body);
     const{name,email,phone}  = req.body;
     if(!name || !email || !phone){
@@ -37,7 +39,7 @@ const createContact = ((req,res)=>{
 // @route PUT /api/contacts
 // @access public
 
-const updateContact = ((req,res)=>{
+const updateContact = asyncHandler(async (req,res)=>{
     const id = req.params.id;
     res.status(200).json("update contacts for "+id);
 });
@@ -46,7 +48,7 @@ const updateContact = ((req,res)=>{
 // @route DELETE /api/contacts
 // @access public
 
-const deleteContact = ((req,res)=>{
+const deleteContact = asyncHandler(async (req,res)=>{
     const id = req.params.id;
     res.status(200).json("delete contacts for "+id);
 });
