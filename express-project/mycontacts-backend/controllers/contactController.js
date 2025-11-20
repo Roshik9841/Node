@@ -4,7 +4,7 @@
 
 
 const getContacts = ((req,res)=>{
-    res.status(200).send("Get all contacts");
+    res.status(200).json("Get all contacts");
 });
 
 // @desc Get  contacts
@@ -14,7 +14,7 @@ const getContacts = ((req,res)=>{
 
 const getContact = ((req,res)=>{
     const id = req.params.id;
-    res.status(200).send("Get  contacts for "+id);
+    res.status(200).json("Get  contacts for "+id);
 });
 
 
@@ -24,7 +24,13 @@ const getContact = ((req,res)=>{
 
 
 const createContact = ((req,res)=>{
-    res.status(201).send("Created contact");
+    console.log("The req body is", req.body);
+    const{name,email,phone}  = req.body;
+    if(!name || !email || !phone){
+        res.status(400);
+        throw new Error("All fields are mandatory!");
+    }
+    res.status(201).json("Created contact");
 });
 
 // @desc update  contacts
@@ -33,7 +39,7 @@ const createContact = ((req,res)=>{
 
 const updateContact = ((req,res)=>{
     const id = req.params.id;
-    res.status(200).send("update contacts for "+id);
+    res.status(200).json("update contacts for "+id);
 });
 
 // @desc delete  contacts
@@ -42,7 +48,7 @@ const updateContact = ((req,res)=>{
 
 const deleteContact = ((req,res)=>{
     const id = req.params.id;
-    res.status(200).send("delete contacts for "+id);
+    res.status(200).json("delete contacts for "+id);
 });
 
 module.exports = {getContact,createContact,getContacts,updateContact,deleteContact};
