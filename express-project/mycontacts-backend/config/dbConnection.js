@@ -1,12 +1,13 @@
-// config/dbConnection.js
-const { Pool } = require('pg');
+const mongoose = require('mongoose');
 
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'mycontacts-backend',
-  password: 'Roshik9841@!',
-  port: 5432,
-});
+const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.CONNECTION_STRING);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error(error);
+    process.exit(1);
+  }
+};
 
-module.exports = pool;
+module.exports = connectDB;
