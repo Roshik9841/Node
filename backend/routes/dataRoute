@@ -2,4 +2,9 @@ const express = require("express");
 
 const router = express.Router();
 
-router.route('/').get()
+const {getData,createData,getDatas,updateData,deleteData} = require("../controllers/dataController");
+
+router.route("/").get(getDatas).post(createData);
+router.route("/:id").get(getData).put(updateData).delete(deleteData);
+
+module.exports = router;
