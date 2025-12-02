@@ -1,7 +1,7 @@
 import {useState,useEffect} from 'react';
 import axios from 'axios';
 import React from 'react';
-export const Form = ({onSuccess})=>{
+export const Form = ({onSuccess,editItem,setEditItem})=>{
 
     const [form,setForm] = useState({name:"",age:"",address:""});
     const inputRef = React.useRef(null);
@@ -10,15 +10,34 @@ export const Form = ({onSuccess})=>{
     inputRef.current.focus();     // Auto-focus name field
   }, []);
 
+  useEffect(()=>{
+    if(editItem){
+    setForm({
+        name:editItem.name,
+        age:editItem.age,
+        address:editItem.address
+    });
+    inputRef.current.focus();
+    }
+  },[editItem])
+
    async function handleSubmit(e){
         e.preventDefault();
+        if(editItem){
+            await axios.put(`http://localhost:5000/api/data/${editItem._id}`,form);
+            setEditItem(null);
+            
+        }else{
        await  axios.post("http://localhost:5000/api/data/",form);
+   
+        }
+
         onSuccess();
         setForm({name:"",age:"",address:""});
-    }
 
+    }
     function handleChange(field,value){
-        setForm({...form, [field]:value} );
+        setForm(prev=>({...prev,[field]:value}));
     }
         return(
             <div className="max-w-6xl mx-auto p-4 m-5">

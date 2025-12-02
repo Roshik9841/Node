@@ -4,7 +4,7 @@ import './App.css'
 import {Form} from './components/Form.jsx';
 function App() {
 const[data,setData] = useState([]);
-
+const [editItem, setEditItem] = useState(null);
 const fetchData = async()=>{
       const res = await axios.get("http://localhost:5000/api/data/");
       setData(res.data);
@@ -20,7 +20,7 @@ const fetchData = async()=>{
   }
   return (
     <>
-    <Form onSuccess={fetchData}/>
+    <Form onSuccess={fetchData} editItem={editItem}  setEditItem={setEditItem}/>
 
     {data.map((item)=>(
       <div className="max-w-xl mx-auto p-4 m-5 border-b-2 border-gray-300 grid grid-cols-3">
@@ -32,7 +32,13 @@ const fetchData = async()=>{
         <li key={item._id} >{item.address}</li>
        
       </ul>
-       <button type="submit">edit</button>
+        <button
+          type="button"
+          className="bg-yellow-400 px-3 py-2 rounded-2xl cursor-pointer"
+          onClick={() => setEditItem(item)}   
+      >
+        Edit
+</button>
        <button type="submit" onClick={()=>handleDelete(item._id)} className="bg-red-600 border-3 rounded-3xl cursor-pointer">delete</button>
       </div>
     ))
