@@ -33,13 +33,13 @@ const updateData = asyncHandler(async(req,res)=>{
 });
 
 const deleteData = asyncHandler(async(req,res)=>{
-    const id = await Data.findById(req.params.id);
-    if(!id){
+    const deleteData = await Data.findByIdAndDelete(req.params.id);
+    if(!deleteData){
         res.status(500);
         throw new Error("Data not found");
     }
-    const deleteData = await id.remove();
-    res.status(200).json({id:req.params.id});
+   
+    res.status(200).json(deleteData);
 });
 
 module.exports = {getData,createData,getDatas,updateData,deleteData};

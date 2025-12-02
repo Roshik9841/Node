@@ -1,6 +1,7 @@
 import {useState,useEffect} from 'react';
+import axios from 'axios';
 import React from 'react';
-export const Form = ()=>{
+export const Form = ({onSuccess})=>{
 
     const [form,setForm] = useState({name:"",age:"",address:""});
     const inputRef = React.useRef(null);
@@ -9,9 +10,11 @@ export const Form = ()=>{
     inputRef.current.focus();     // Auto-focus name field
   }, []);
 
-    function handleSubmit(e){
+   async function handleSubmit(e){
         e.preventDefault();
-        console.log("Form submitted:", form);
+       await  axios.post("http://localhost:5000/api/data/",form);
+        onSuccess();
+        setForm({name:"",age:"",address:""});
     }
 
     function handleChange(field,value){
