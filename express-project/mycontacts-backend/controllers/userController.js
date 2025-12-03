@@ -44,20 +44,18 @@ const loginUser = asyncHandler(async (req, res) => {
     const user = await User.findOne({email});
     //compare password with hashed password
     if(user && (await bcrypt.compare(password,user.password))){
-        const accessToken = jwt.sign({
-            user:{
+        const accessToken = jwt.sign({        //kk pathauni bhanera yesma lekhxa
+            user:{        
                 username:user.username,
                 email:user.email,
                 id:user.id,
             },
-        },process.env.ACCCESS_TOKEN_SECRET,{expiresIn:"1m"});
+        },process.env.ACCESS_TOKEN_SECRET,{expiresIn:"1m"});           //yo env bata token ko pw leko ani kati time paxi expire hunxa bhanera leko
         res.status(200).json({accessToken});
     }else{
         res.status(401);
         throw new Error("Email or password is not valid");
     }
-
-     res.json({message:"Login the user"})
 });
 
 //@desc Current user info
@@ -65,7 +63,7 @@ const loginUser = asyncHandler(async (req, res) => {
 //@access private
 const currentUser = asyncHandler(async(req,res)=>{
 
-    res.json({message:"Current  user info"});
+    res.json(req.user);
 
 })
 module.exports = {registerUser,loginUser,currentUser};
