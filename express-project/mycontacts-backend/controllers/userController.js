@@ -50,7 +50,7 @@ const loginUser = asyncHandler(async (req, res) => {
                 email:user.email,
                 id:user.id,
             },
-        },process.env.ACCESS_TOKEN_SECRET,{expiresIn:"1m"});           //yo env bata token ko pw leko ani kati time paxi expire hunxa bhanera leko
+        },process.env.ACCESS_TOKEN_SECRET,{expiresIn:"15m"});           //yo env bata token ko pw leko ani kati time paxi expire hunxa bhanera leko
         res.status(200).json({accessToken});
     }else{
         res.status(401);

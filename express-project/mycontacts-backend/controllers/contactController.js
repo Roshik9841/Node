@@ -2,12 +2,14 @@ const asyncHandler = require('express-async-handler');
 const Contact = require('../models/contactModel');
 
 // @desc Get all contacts
+//access private
 const getContacts = asyncHandler(async (req, res) => {
-  const contacts = await Contact.find();
+  const contacts = await Contact.find({user_id:req.user.id});
   res.status(200).json(contacts);
 });
 
 // @desc Get single contact
+//access private
 const getContact = asyncHandler(async (req, res) => {
   const contact = await Contact.findById(req.params.id);
   if (!contact) {
@@ -18,17 +20,19 @@ const getContact = asyncHandler(async (req, res) => {
 });
 
 // @desc Create contact
+//access private
 const createContact = asyncHandler(async (req, res) => {
   const { name, email, phone } = req.body;
   if (!name || !email || !phone) {
     res.status(400);
     throw new Error('All fields are required');
   }
-  const contact = await Contact.create({ name, email, phone });
+  const contact = await Contact.create({ name, email, phone,user_id:req.user.id });
   res.status(201).json(contact);
 });
 
 // @desc Update contact
+//access private
 const updateContact = asyncHandler(async (req, res) => {
   const contact = await Contact.findById(req.params.id);
   if (!contact) {
@@ -42,6 +46,7 @@ const updateContact = asyncHandler(async (req, res) => {
 });
 
 // @desc Delete contact
+//access private
 const deleteContact = asyncHandler(async (req, res) => {
   const contact = await Contact.findById(req.params.id);
   if (!contact) {
