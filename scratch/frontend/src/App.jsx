@@ -1,5 +1,13 @@
 import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import "./App.css";
+
+// Zod schema
+const schema = z.object({
+  email: z.string().email("Invalid email format"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
 
 function App() {
   const {
@@ -7,13 +15,20 @@ function App() {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      email: "Roshik9841@gmail.com",
+    },
+    resolver: zodResolver(schema),
+  });
 
   async function onSubmit(data) {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       console.log(data);
+
+      // Simulate server-side error
       throw new Error();
     } catch (error) {
       setError("root", { message: "This is incorrect" });
@@ -24,14 +39,9 @@ function App() {
     <div className="min-h-screen flex justify-center items-center bg-gray-100">
       <div className="w-full max-w-sm bg-white shadow-lg p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          {/* Email */}
           <input
-            {...register("email", {
-              required: "Email is required",
-              pattern: {
-                value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                message: "Invalid email format",
-              },
-            })}
+            {...register("email")}
             type="text"
             placeholder="Email"
             className="w-full border rounded-lg p-2"
@@ -40,14 +50,9 @@ function App() {
             <div className="text-red-400">{errors.email.message}</div>
           )}
 
+          {/* Password */}
           <input
-            {...register("password", {
-              required: "Password is required",
-              minLength: {
-                value: 6,
-                message: "Password must be at least 6 characters",
-              },
-            })}
+            {...register("password")}
             type="password"
             placeholder="Password"
             className="w-full border rounded-lg p-2"
@@ -56,6 +61,7 @@ function App() {
             <div className="text-red-400">{errors.password.message}</div>
           )}
 
+          {/* Submit button */}
           <button
             disabled={isSubmitting}
             type="submit"
@@ -63,8 +69,12 @@ function App() {
           >
             {isSubmitting ? "Loading..." : "Submit"}
           </button>
+
+          {/* Server error */}
           {errors.root && (
-            <div className="text-red-400">{errors.root.message}</div>
+            <div className="text-red-400 text-center mt-2">
+              {errors.root.message}
+            </div>
           )}
         </form>
       </div>
