@@ -9,31 +9,33 @@ const schema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
-function App() {
+// Infer TypeScript type from schema
+type Schema2 = z.infer<typeof schema>;
+
+function Form() {
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm({
-    defaultValues: {
-      email: "Roshik9841@gmail.com",
-    },
+  } = useForm<Schema2>({
     resolver: zodResolver(schema),
   });
 
-  async function onSubmit(data) {
+  // Type data as Schema2
+  const onSubmit = async (data: Schema2) => {
     try {
+      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
       console.log(data);
 
-      // Simulate server-side error
-      throw new Error();
+      // Simulate server error
+      throw new Error("Server error");
     } catch (error) {
-      setError("root", { message: "This is incorrect" });
+      // TypeScript: specify root as key
+      setError("root" as const, { message: "This is incorrect" });
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex justify-center items-center bg-gray-100">
@@ -82,4 +84,4 @@ function App() {
   );
 }
 
-export default App;
+export default Form;
