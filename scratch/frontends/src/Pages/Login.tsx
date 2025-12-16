@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button"
+import { ThemeProvider } from "../components/theme-provider";
+import { ModeToggle } from "../components/mode-toggle";
 import {
   Card,
   CardAction,
@@ -13,6 +15,8 @@ import { Label } from "@/components/ui/label"
 
 export function Login() {
   return (
+     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+            <ModeToggle />
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Login to your account</CardTitle>
@@ -59,5 +63,6 @@ export function Login() {
         </Button>
       </CardFooter>
     </Card>
+    </ThemeProvider>
   )
 }
