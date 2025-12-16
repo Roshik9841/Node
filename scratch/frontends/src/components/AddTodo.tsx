@@ -1,31 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "../app/store"; // import your typed dispatch
+import { addTodo } from "../features/todo/todoSlice";
 
-import {useDispatch} from 'react-redux';
-import {addTodo,removeTodo} from '../features/todo/todoSlice.js';
+function AddTodo() {
+  const [input, setInput] = useState("");
 
-function AddTodo(){
+  // Use typed dispatch
+  const dispatch = useDispatch<AppDispatch>();
 
-    const [input,setInput] =useState("");
-    const dispatch = useDispatch();
+  function addTodoHandler(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (input.trim() === "") return;
 
-    function addTodoHandler(e:React.ChangeEvent<HTMLInputElement>){
-        e.preventDefault();
-        dispatch(addTodo(input));
-        setInput('');
-    }
+    dispatch(addTodo(input)); // Type-safe dispatch
+    setInput("");
+  }
 
-    return(
-        <>
-        <form onSubmit={addTodoHandler}>
-            <input type="text"
-            value={input}
-            onChange= {(e)=>setInput(e.target.value)}
-            placeholder="Enter"/>
-
-
-
-        </form>
-        </>
-    )
+  return (
+    <form onSubmit={addTodoHandler}>
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Enter todo"
+      />
+      <button type="submit">Add</button>
+    </form>
+  );
 }
+
 export default AddTodo;
