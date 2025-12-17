@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../app/store"; // import your typed dispatch
 import { addTodo } from "../features/todo/todoSlice";
 
 function AddTodo() {
   const [input, setInput] = useState("");
 
   // Use typed dispatch
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch();
 
   function addTodoHandler(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();

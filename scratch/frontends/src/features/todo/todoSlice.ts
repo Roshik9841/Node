@@ -7,7 +7,7 @@ type TodoState = {
 };
 
 const initialState: TodoState = {
-  todos: [{ id: nanoid(), text: "Hello world" }],
+  todos: [],
 };
 
 const todoSlice = createSlice({
