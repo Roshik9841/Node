@@ -1,17 +1,23 @@
 // import { Button } from "./components/ui/button";
 // import React from "react";
 
-// import { Login } from "./Pages/Login";
+import { Login } from "./Pages/Login";
 import AddTodo from "./components/AddTodo";
 import { Todos } from "./components/Todos";
+import ProctorCamera from "./Pages/ProctorCamera";
+import ProctorFocusTracker from "./Pages/ProctorFocusTracker";
+import ProctorScreenShare from "./Pages/ProctorScreenShare";
 
 const App = () => {
   return (
     <div className="min-h-screen max-w-5xl mx-auto p-5 ">
      
-        {/* <Login /> */}
+        <Login />
       <AddTodo/>
       <Todos/>
+      {/* <ProctorCamera/>
+      <ProctorFocusTracker/>
+      <ProctorScreenShare/> */}
 
       {/* <Button>Submit</Button> */}
     </div>
