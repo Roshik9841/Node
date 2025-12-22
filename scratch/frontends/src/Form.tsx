@@ -1,87 +1,148 @@
+// src/App.tsx
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import "./App.css";
+import { z } from "zod";
 
-// Zod schema
-const schema = z.object({
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+interface User {
+  id?: number;
+  name: string;
+  email: string;
+}
+
+const userSchema = z.object({
+  name: z.string().min(2, "Name is required"),
+  email: z.string().email("Invalid email"),
 });
 
-// Infer TypeScript type from schema
-type Schema2 = z.infer<typeof schema>;
+const api = axios.create({
+  baseURL: "https://jsonplaceholder.typicode.com",
+});
 
-function Form() {
+export default function Form() {
+  const queryClient = useQueryClient();
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  // ✅ useQuery (v5 OBJECT syntax)
+  const { data: users = [], isLoading } = useQuery<User[]>({
+    queryKey: ["users"],
+    queryFn: async () => {
+      const res = await api.get<User[]>("/users");
+      return res.data;
+    },
+  });
+
+  // ✅ Add / Edit mutation (v5)
+  const mutation = useMutation({
+    mutationFn: (user: User) =>
+      editingUser
+        ? api.put(`/users/${editingUser.id}`, user)
+        : api.post("/users", user),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      reset();
+      setEditingUser(null);
+    },
+  });
+
+  // ✅ Delete mutation (v5)
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.delete(`/users/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+  });
+
   const {
     register,
     handleSubmit,
-    setError,
-    formState: { errors, isSubmitting },
-  } = useForm<Schema2>({
-    resolver: zodResolver(schema),
+    reset,
+    formState: { errors },
+  } = useForm<User>({
+    resolver: zodResolver(userSchema),
   });
 
-  // Type data as Schema2
-  const onSubmit = async (data: Schema2) => {
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000)); 
-      console.log(data);
-
-      // Simulate server error
-      throw new Error("Server error");
-    } catch (error) {
-      // TypeScript: specify root as key
-      setError("root" as const, { message: "This is incorrect" });
-    }
+  const onSubmit = (data: User) => {
+    mutation.mutate(data);
   };
 
+  const handleEdit = (user: User) => {
+    setEditingUser(user);
+    reset(user);
+  };
+
+  if (isLoading) return <p>Loading...</p>;
+
   return (
-    <div className="min-h-screen flex justify-center items-center bg-gray-100">
-      <div className="w-full max-w-sm bg-white shadow-lg p-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Email */}
-          <input
-            {...register("email")}
-            type="text"
-            placeholder="Email"
-            className="w-full border rounded-lg p-2"
-          />
-          {errors.email && (
-            <div className="text-red-400">{errors.email.message}</div>
-          )}
+    <div className="p-4 max-w-md mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Users CRUD</h1>
 
-          {/* Password */}
-          <input
-            {...register("password")}
-            type="password"
-            placeholder="Password"
-            className="w-full border rounded-lg p-2"
-          />
-          {errors.password && (
-            <div className="text-red-400">{errors.password.message}</div>
-          )}
+      <form onSubmit={handleSubmit(onSubmit)} className="mb-6 space-y-2">
+        <input
+          {...register("name")}
+          placeholder="Name"
+          className="border p-2 w-full"
+        />
+        {errors.name && (
+          <p className="text-red-500">{errors.name.message}</p>
+        )}
 
-          {/* Submit button */}
+        <input
+          {...register("email")}
+          placeholder="Email"
+          className="border p-2 w-full"
+        />
+        {errors.email && (
+          <p className="text-red-500">{errors.email.message}</p>
+        )}
+
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2">
+          {editingUser ? "Update" : "Add"}
+        </button>
+
+        {editingUser && (
           <button
-            disabled={isSubmitting}
-            type="submit"
-            className="bg-red-200 rounded-2xl w-1/2 mx-auto block hover:bg-blue-400 p-2 text-white"
+            type="button"
+            className="bg-gray-500 text-white px-4 py-2 ml-2"
+            onClick={() => {
+              reset();
+              setEditingUser(null);
+            }}
           >
-            {isSubmitting ? "Loading..." : "Submit"}
+            Cancel
           </button>
+        )}
+      </form>
 
-          {/* Server error */}
-          {errors.root && (
-            <div className="text-red-400 text-center mt-2">
-              {errors.root.message}
+      <ul>
+        {users.map((user) => (
+          <li key={user.id} className="flex justify-between mb-2 border p-2">
+            <span>
+              {user.name} ({user.email})
+            </span>
+            <div>
+              <button
+                onClick={() => handleEdit(user)}
+                className="bg-yellow-400 px-2 py-1 mr-2"
+              >
+                Edit
+              </button>
+
+              {user.id && (
+                <button
+                  onClick={() => deleteMutation.mutate(user.id)}
+                  className="bg-red-500 px-2 py-1 text-white"
+                >
+                  Delete
+                </button>
+              )}
             </div>
-          )}
-        </form>
-      </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
-
-export default Form;

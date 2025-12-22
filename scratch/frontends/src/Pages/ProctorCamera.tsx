@@ -1,34 +1,68 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
+import { FaceDetection } from "@mediapipe/face_detection";
+import { Camera } from "@mediapipe/camera_utils";
 
 export default function ProctorCamera() {
-  const videoRef = useRef(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const cameraRef = useRef<Camera | null>(null);
+  const [faceDetected, setFaceDetected] = useState(false);
 
   useEffect(() => {
-    const enableCamera = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (err) {
-        console.error("Webcam access denied or error:", err);
-      }
-    };
+    if (!videoRef.current) return;
 
-    enableCamera();
+    const faceDetection = new FaceDetection({
+      locateFile: (file) =>
+        `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`,
+    });
+
+    faceDetection.setOptions({
+      model: "short",
+      minDetectionConfidence: 0.6,
+    });
+
+    faceDetection.onResults((results) => {
+      if (results.detections && results.detections.length > 0) {
+        setFaceDetected(true);
+      } else {
+        setFaceDetected(false);
+      }
+    });
+
+    cameraRef.current = new Camera(videoRef.current, {
+      onFrame: async () => {
+        if (videoRef.current) {
+          await faceDetection.send({ image: videoRef.current });
+        }
+      },
+      width: 300,
+      height: 200,
+    });
+
+    cameraRef.current.start();
+
+    return () => {
+      cameraRef.current?.stop();
+    };
   }, []);
 
   return (
     <div style={{ padding: 20 }}>
-      <h2>Proctor Camera Test</h2>
+      <h2>Proctor Camera</h2>
+
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        style={{ width: "300px", border: "2px solid black" }}
+        muted
+      
       />
+
+      <p>
+        Status:{" "}
+        <strong style={{ color: faceDetected ? "green" : "red" }}>
+          {faceDetected ? "Face Detected" : "No Face Detected"}
+        </strong>
+      </p>
     </div>
   );
 }
