@@ -16,10 +16,10 @@ const App = () => {
         <Login />
       <AddTodo/>
       <Todos/> */}
-      {/* <ProctorCamera/>
-      <ProctorFocusTracker/>
+      <ProctorCamera/>
+      {/* <ProctorFocusTracker/>
       <ProctorScreenShare/> */}
-  <Form/>
+  {/* <Form/> */}
       {/* <Button>Submit</Button> */}
     </div>
   );
