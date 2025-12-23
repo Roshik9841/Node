@@ -22,7 +22,7 @@ for(let i=0;i<=colors.length;i++){
 }
 console.log(foundWord);
 let num = [-12,12,-2];
-let noAbove: number[] | boolean=false;
+let noAbove: number | boolean=false;
 
 for(let i=0;i<=num.length;i++){
     if(num[i]<0){
