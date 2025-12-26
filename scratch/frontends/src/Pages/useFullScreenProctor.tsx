@@ -13,18 +13,27 @@ type Props = {
 export function useFullScreenProctor({ violations, addViolation }: Props) {
   const allowExitRef = useRef(false);
 
-  const startProctoring = async () => {
+  /* ===========================
+     ▶️ START EXAM (USER CLICK)
+  ============================ */
+  const startProctoring = () => {
     allowExitRef.current = false;
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen();
+
+    const el = document.documentElement;
+
+    if (!document.fullscreenElement && el.requestFullscreen) {
+      el.requestFullscreen().catch(() => {
+        alert("Fullscreen permission is required to start the exam.");
+      });
     }
   };
 
-  const stopProctoring = async () => {
+  /* ===========================
+     ⏹ STOP EXAM
+  ============================ */
+  const stopProctoring = () => {
     allowExitRef.current = true;
-    if (document.fullscreenElement) {
-      await document.exitFullscreen();
-    }
+    // Optional: do NOT force exit fullscreen (safer)
   };
 
   /* ===========================
@@ -86,13 +95,13 @@ export function useFullScreenProctor({ violations, addViolation }: Props) {
   }, [addViolation]);
 
   /* ===========================
-     🖥 Fullscreen Exit
+     🖥 Prevent Fullscreen Exit
   ============================ */
   useEffect(() => {
-    const onFullscreenChange = async () => {
+    const onFullscreenChange = () => {
       if (!document.fullscreenElement && !allowExitRef.current) {
         addViolation("EXIT_FULLSCREEN");
-        await document.documentElement.requestFullscreen();
+        document.documentElement.requestFullscreen().catch(() => {});
       }
     };
 
@@ -125,7 +134,9 @@ export function useFullScreenProctor({ violations, addViolation }: Props) {
   ============================ */
   useEffect(() => {
     const MAX_TAB_VIOLATIONS = 10;
-    const tabCount = violations.filter(v => v.type === "TAB_SWITCH").length;
+    const tabCount = violations.filter(
+      (v) => v.type === "TAB_SWITCH"
+    ).length;
 
     if (tabCount >= MAX_TAB_VIOLATIONS) {
       alert("Exam terminated due to tab switching");
