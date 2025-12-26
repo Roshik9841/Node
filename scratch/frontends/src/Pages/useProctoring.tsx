@@ -9,7 +9,7 @@ export type Violation = {
   time: string;
 };
 
-export function useProctoring(videoRef: React.RefObject<HTMLVideoElement>) {
+export function useProctoring(videoRef: React.RefObject<HTMLVideoElement>,  examStarted: boolean) {
   const cameraRef = useRef<Camera | null>(null);
   const [violations, setViolations] = useState<Violation[]>([]);
   const [faceDetected, setFaceDetected] = useState(false);
@@ -37,6 +37,7 @@ export function useProctoring(videoRef: React.RefObject<HTMLVideoElement>) {
   useEffect(() => {
     if (!videoRef.current) return;
 
+        if (!examStarted) return;
     const faceDetection = new FaceDetection({
       locateFile: (file) =>
         `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`,
@@ -74,7 +75,7 @@ export function useProctoring(videoRef: React.RefObject<HTMLVideoElement>) {
     cameraRef.current.start();
 
     return () => cameraRef.current?.stop();
-  }, []);
+  }, [examStarted]);
 
   return {
     faceDetected,

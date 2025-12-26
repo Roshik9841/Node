@@ -7,7 +7,7 @@ import { Todos } from "./components/Todos";
 import ProctorCamera from "./Pages/ProctorCamera";
 import ProctorFocusTracker from "./Pages/ProctorFocusTracker";
 import ProctorScreenShare from "./Pages/ProctorScreenShare";
-import Form from "./Form";
+
 import {Home} from "./Pages/Home";
 const App = () => {
   return (
@@ -25,7 +25,7 @@ const App = () => {
       <Todos/> */}
       
  
-  {/* <Form/> */}
+  {/* <Form2/> */}
       {/* <Button>Submit</Button> */}
     </div>
   );

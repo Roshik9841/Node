@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 type Violation = {
   type: string;
@@ -10,45 +10,100 @@ type Props = {
   addViolation: (type: string) => void;
 };
 
-
 export function useFullScreenProctor({ violations, addViolation }: Props) {
+  const allowExitRef = useRef(false);
+
   const startProctoring = async () => {
-    await document.documentElement.requestFullscreen();
+    allowExitRef.current = false;
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    }
   };
 
   const stopProctoring = async () => {
+    allowExitRef.current = true;
     if (document.fullscreenElement) {
       await document.exitFullscreen();
     }
   };
 
-  // ESC key
+  /* ===========================
+     ⛔ Restricted Keys
+  ============================ */
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      const restrictedKeys = ["F12", "F5", "Escape", "PrintScreen"];
+
+      const blockedCombos =
+        (e.ctrlKey && e.key.toLowerCase() === "s") || // Ctrl+S
+        (e.ctrlKey && e.shiftKey && ["i", "j"].includes(e.key.toLowerCase())) || // DevTools
+        (e.ctrlKey && e.key.toLowerCase() === "u"); // View source
+
+      if (restrictedKeys.includes(e.key) || blockedCombos) {
         e.preventDefault();
-        addViolation("ESC_PRESSED");
+        e.stopPropagation();
+
+        if (e.key === "PrintScreen") {
+          addViolation("SCREENSHOT");
+        } else if (blockedCombos) {
+          addViolation("DEVTOOLS");
+        } else {
+          addViolation("RESTRICTED_KEY");
+        }
       }
     };
 
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [addViolation]);
 
-  // Fullscreen exit
+  /* ===========================
+     🖱 Right Click
+  ============================ */
   useEffect(() => {
-    const onFullscreenChange = () => {
-      if (!document.fullscreenElement) {
+    const onContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      addViolation("RIGHT_CLICK");
+    };
+
+    document.addEventListener("contextmenu", onContextMenu, true);
+    return () =>
+      document.removeEventListener("contextmenu", onContextMenu, true);
+  }, [addViolation]);
+
+  /* ===========================
+     🔄 Refresh / Navigation
+  ============================ */
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      addViolation("PAGE_REFRESH");
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [addViolation]);
+
+  /* ===========================
+     🖥 Fullscreen Exit
+  ============================ */
+  useEffect(() => {
+    const onFullscreenChange = async () => {
+      if (!document.fullscreenElement && !allowExitRef.current) {
         addViolation("EXIT_FULLSCREEN");
+        await document.documentElement.requestFullscreen();
       }
     };
 
     document.addEventListener("fullscreenchange", onFullscreenChange);
     return () =>
       document.removeEventListener("fullscreenchange", onFullscreenChange);
-  }, []);
+  }, [addViolation]);
 
-  // Tab / window switch
+  /* ===========================
+     🔁 Tab / Window switch
+  ============================ */
   useEffect(() => {
     const onVisibilityChange = () => {
       if (document.hidden) addViolation("TAB_SWITCH");
@@ -63,15 +118,14 @@ export function useFullScreenProctor({ violations, addViolation }: Props) {
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("blur", onBlur);
     };
-  }, []);
+  }, [addViolation]);
 
-  // Auto terminate exam
+  /* ===========================
+     ❌ Auto terminate
+  ============================ */
   useEffect(() => {
-    const MAX_TAB_VIOLATIONS = 1;
-
-    const tabCount = violations.filter(
-      (v) => v.type === "TAB_SWITCH"
-    ).length;
+    const MAX_TAB_VIOLATIONS = 10;
+    const tabCount = violations.filter(v => v.type === "TAB_SWITCH").length;
 
     if (tabCount >= MAX_TAB_VIOLATIONS) {
       alert("Exam terminated due to tab switching");
