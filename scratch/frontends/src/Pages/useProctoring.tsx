@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FaceDetection } from "@mediapipe/face_detection";
+import { FaceMesh } from "@mediapipe/face_mesh";
 import { Camera } from "@mediapipe/camera_utils";
 import { useSoundProctor } from "./useSoundProctor";
 import { useFullScreenProctor } from "./useFullScreenProctor";
@@ -9,7 +9,7 @@ export type Violation = {
   time: string;
 };
 
-export function useProctoring(videoRef: React.RefObject<HTMLVideoElement>,  examStarted: boolean) {
+export function useProctoring(videoRef: React.RefObject<HTMLVideoElement | null>,  examStarted: boolean) {
   const cameraRef = useRef<Camera | null>(null);
   const [violations, setViolations] = useState<Violation[]>([]);
   const [faceDetected, setFaceDetected] = useState(false);
@@ -25,31 +25,35 @@ export function useProctoring(videoRef: React.RefObject<HTMLVideoElement>,  exam
   };
 
   // 🔊 Sound
-  useSoundProctor(addViolation);
+  useSoundProctor(addViolation, examStarted);
 
   // 🔒 Fullscreen + tab lock
   const { startProctoring, stopProctoring } = useFullScreenProctor({
     violations,
     addViolation,
+    examStarted,
   });
 
-  // 👤 Face detection
+  // 👤 Face detection using FaceMesh
   useEffect(() => {
     if (!videoRef.current) return;
 
-        if (!examStarted) return;
-    const faceDetection = new FaceDetection({
+    if (!examStarted) return;
+    
+    const faceMesh = new FaceMesh({
       locateFile: (file) =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`,
+        `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
     });
 
-    faceDetection.setOptions({
-      model: "short",
-      minDetectionConfidence: 0.6,
+    faceMesh.setOptions({
+      maxNumFaces: 1,
+      refineLandmarks: true,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5,
     });
 
-    faceDetection.onResults((results) => {
-      const count = results.detections?.length || 0;
+    faceMesh.onResults((results) => {
+      const count = results.multiFaceLandmarks?.length || 0;
 
       if (count === 0) {
         setFaceDetected(false);
@@ -65,7 +69,7 @@ export function useProctoring(videoRef: React.RefObject<HTMLVideoElement>,  exam
     cameraRef.current = new Camera(videoRef.current, {
       onFrame: async () => {
         if (videoRef.current) {
-          await faceDetection.send({ image: videoRef.current });
+          await faceMesh.send({ image: videoRef.current });
         }
       },
       width: 300,

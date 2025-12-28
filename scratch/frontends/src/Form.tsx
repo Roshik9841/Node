@@ -114,6 +114,7 @@ export default function Form() {
           >
             Cancel
           </button>
+          
         )}
       </form>
 
@@ -138,6 +139,7 @@ export default function Form() {
                 >
                   Delete
                 </button>
+                
               )}
             </div>
           </li>

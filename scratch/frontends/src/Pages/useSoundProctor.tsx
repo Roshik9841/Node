@@ -4,6 +4,7 @@ type SoundViolationCallback = (type: string) => void;
 
 export function useSoundProctor(
   onViolation: SoundViolationCallback,
+  examStarted: boolean,
   volumeThreshold = 0.08 // tweak if needed
 ) {
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -14,6 +15,8 @@ export function useSoundProctor(
   const lastViolationRef = useRef(0);
 
   useEffect(() => {
+    if (!examStarted) return;
+
     let stream: MediaStream;
 
     const initAudio = async () => {
@@ -23,11 +26,12 @@ export function useSoundProctor(
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
 
-      analyser.fftSize = 512;
+      analyser.fftSize = 2048;
+      analyser.smoothingTimeConstant = 0.8;
 
       source.connect(analyser);
 
-      const bufferLength = analyser.frequencyBinCount;
+      const bufferLength = analyser.fftSize;
       const dataArray = new Uint8Array(bufferLength);
 
       audioContextRef.current = audioContext;
@@ -38,17 +42,20 @@ export function useSoundProctor(
     };
 
     const detectSound = () => {
-      if (!analyserRef.current || !dataArrayRef.current) return;
+      if (!analyserRef.current || !dataArrayRef.current || !examStarted) return;
 
-      analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+      // Get time domain data for RMS calculation
+      analyserRef.current.getByteTimeDomainData(dataArrayRef.current);
 
-      // Normalize volume (0 - 1)
-      const avg =
-        dataArrayRef.current.reduce((a, b) => a + b, 0) /
-        dataArrayRef.current.length /
-        255;
+      // Calculate RMS (Root Mean Square)
+      let sumSquares = 0;
+      for (let i = 0; i < dataArrayRef.current.length; i++) {
+        const normalized = (dataArrayRef.current[i] - 128) / 128; // Normalize to -1 to 1
+        sumSquares += normalized * normalized;
+      }
+      const rms = Math.sqrt(sumSquares / dataArrayRef.current.length);
 
-      if (avg > volumeThreshold) {
+      if (rms > volumeThreshold) {
         if (!soundStartRef.current) {
           soundStartRef.current = Date.now();
         }
@@ -74,5 +81,5 @@ export function useSoundProctor(
       stream?.getTracks().forEach((t) => t.stop());
       audioContextRef.current?.close();
     };
-  }, []);
+  }, [examStarted, onViolation, volumeThreshold]);
 }

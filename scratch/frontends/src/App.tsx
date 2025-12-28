@@ -1,13 +1,12 @@
 // import { Button } from "./components/ui/button";
 // import React from "react";
 import {BrowserRouter,Routes,Route } from "react-router-dom";
-import { Login } from "./Pages/Login";
-import AddTodo from "./components/AddTodo";
-import { Todos } from "./components/Todos";
+// import { Login } from "./Pages/Login";
+// import AddTodo from "./components/AddTodo";
+// import { Todos } from "./components/Todos";
 import ProctorCamera from "./Pages/ProctorCamera";
-import ProctorFocusTracker from "./Pages/ProctorFocusTracker";
-import ProctorScreenShare from "./Pages/ProctorScreenShare";
 
+import {Form2} from "./Form2";
 import {Home} from "./Pages/Home";
 const App = () => {
   return (
@@ -15,7 +14,7 @@ const App = () => {
       
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home/>}/>
+          <Route path="/" element={<Form2/>}/>
           <Route path="/Tracker" element={<ProctorCamera/>}/>
         </Routes>
       </BrowserRouter>

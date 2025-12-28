@@ -8,9 +8,10 @@ type Violation = {
 type Props = {
   violations: Violation[];
   addViolation: (type: string) => void;
+  examStarted: boolean;
 };
 
-export function useFullScreenProctor({ violations, addViolation }: Props) {
+export function useFullScreenProctor({ violations, addViolation, examStarted }: Props) {
   const allowExitRef = useRef(false);
 
   /* ===========================
@@ -40,6 +41,8 @@ export function useFullScreenProctor({ violations, addViolation }: Props) {
      ⛔ Restricted Keys
   ============================ */
   useEffect(() => {
+    if (!examStarted) return;
+
     const onKeyDown = (e: KeyboardEvent) => {
       const restrictedKeys = ["F12", "F5", "Escape", "PrintScreen"];
 
@@ -64,12 +67,14 @@ export function useFullScreenProctor({ violations, addViolation }: Props) {
 
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [addViolation]);
+  }, [addViolation, examStarted]);
 
   /* ===========================
      🖱 Right Click
   ============================ */
   useEffect(() => {
+    if (!examStarted) return;
+
     const onContextMenu = (e: MouseEvent) => {
       e.preventDefault();
       addViolation("RIGHT_CLICK");
@@ -78,12 +83,14 @@ export function useFullScreenProctor({ violations, addViolation }: Props) {
     document.addEventListener("contextmenu", onContextMenu, true);
     return () =>
       document.removeEventListener("contextmenu", onContextMenu, true);
-  }, [addViolation]);
+  }, [addViolation, examStarted]);
 
   /* ===========================
      🔄 Refresh / Navigation
   ============================ */
   useEffect(() => {
+    if (!examStarted) return;
+
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
       addViolation("PAGE_REFRESH");
@@ -92,12 +99,14 @@ export function useFullScreenProctor({ violations, addViolation }: Props) {
 
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [addViolation]);
+  }, [addViolation, examStarted]);
 
   /* ===========================
      🖥 Prevent Fullscreen Exit
   ============================ */
   useEffect(() => {
+    if (!examStarted) return;
+
     const onFullscreenChange = () => {
       if (!document.fullscreenElement && !allowExitRef.current) {
         addViolation("EXIT_FULLSCREEN");
@@ -108,12 +117,14 @@ export function useFullScreenProctor({ violations, addViolation }: Props) {
     document.addEventListener("fullscreenchange", onFullscreenChange);
     return () =>
       document.removeEventListener("fullscreenchange", onFullscreenChange);
-  }, [addViolation]);
+  }, [addViolation, examStarted]);
 
   /* ===========================
      🔁 Tab / Window switch
   ============================ */
   useEffect(() => {
+    if (!examStarted) return;
+
     const onVisibilityChange = () => {
       if (document.hidden) addViolation("TAB_SWITCH");
     };
@@ -127,7 +138,7 @@ export function useFullScreenProctor({ violations, addViolation }: Props) {
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("blur", onBlur);
     };
-  }, [addViolation]);
+  }, [addViolation, examStarted]);
 
   /* ===========================
      ❌ Auto terminate

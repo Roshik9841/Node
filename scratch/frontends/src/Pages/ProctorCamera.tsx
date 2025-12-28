@@ -95,18 +95,20 @@ export default function ProctorCamera() {
         </p>
       </div>
 
-      <div>
-        <p className="font-semibold mb-2">
-          Violations recorded: {violations.length}
-        </p>
-        <ul className="list-disc list-inside space-y-1 max-h-40 overflow-y-auto border p-2 rounded bg-gray-50">
-          {violations.map((v, i) => (
-            <li key={i} className="text-gray-700">
-              {v.type} at {v.time}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {examStarted && (
+        <div>
+          <p className="font-semibold mb-2">
+            Violations recorded: {violations.length}
+          </p>
+          <ul className="list-disc list-inside space-y-1 max-h-40 overflow-y-auto border p-2 rounded bg-gray-50">
+            {violations.map((v, i) => (
+              <li key={i} className="text-gray-700">
+                {v.type} at {v.time}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

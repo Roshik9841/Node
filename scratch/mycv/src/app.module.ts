@@ -5,7 +5,7 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
 import { UsersController } from './users/users.controller';
- 
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
