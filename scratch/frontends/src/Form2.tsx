@@ -2,10 +2,31 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useState, useEffect } from "react";
 
+interface Recipe {
+  id: number;
+  name: string;
+  image: string;
+  tags?: string[];
+  mealType?: string[];
+  ingredients?: string[];
+  instructions?: string[];
+  difficulty: string;
+  prepTimeMinutes: number;
+  cookTimeMinutes: number;
+  servings: number;
+  caloriesPerServing: number;
+  cuisine: string;
+  rating: number;
+  reviewCount: number;
+}
+
 export const Form2 = () => {
-  const [search, setSearch] = useState("");
-  const [debounce, setDebounce] = useState("");
-  const { data, isLoading, error } = useQuery({
+  const [search, setSearch] = useState<string>("");
+  const [debounce, setDebounce] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const postPerPage = 6;
+
+  const { data, isLoading, error } = useQuery<Recipe[]>({
     queryKey: ["recipes", debounce],
     queryFn: async () => {
       const url = debounce
@@ -25,6 +46,32 @@ export const Form2 = () => {
     };
   }, [search]);
 
+  const recipes: Recipe[] = data?.recipes || [];
+  const totalPages = Math.ceil(recipes.length / postPerPage);
+  const indexOfLastPost = currentPage * postPerPage;
+  const indexOfFirstPost = indexOfLastPost - postPerPage;
+  const currentPosts: Recipe[] = data?.recipes.slice(
+    indexOfFirstPost,
+    indexOfLastPost
+  );
+
+  const goToPage = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   if (isLoading) return <div className="text-center mt-10">Loading...</div>;
   if (error)
     return <div className="text-center mt-10 text-red-500">Error occurred</div>;
@@ -38,11 +85,14 @@ export const Form2 = () => {
         value={search}
         placeholder="Search Recipes"
         className="w-1/2 px-2 border py-3 rounded-xl mb-4 flex mx-auto "
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setCurrentPage(1);
+        }}
       />
 
-      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {data?.recipes?.map((post) => (
+      <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
+        {currentPosts.map((post: Recipe) => (
           <li
             key={post.id}
             className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 flex flex-col"
@@ -84,8 +134,8 @@ export const Form2 = () => {
               {/* Ingredients */}
               <p className="font-medium mt-2 mb-3">Ingredients:</p>
               <ul className="list-disc list-inside text-sm text-gray-700 mb-2 max-h-30 overflow-auto">
-                {post.ingredients?.map((ing) => (
-                  <li key={ing}>{ing}</li>
+                {post.ingredients?.map((ing,idx) => (
+                  <li key={idx}>{ing}</li>
                 ))}
               </ul>
 
@@ -114,6 +164,38 @@ export const Form2 = () => {
           </li>
         ))}
       </ul>
+
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
+          <button
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            className="px-3 py-1 border rounded-lg disabled:opacity-50"
+          >
+            Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => goToPage(page)}
+              className={`px-3 py-1 border rounded-lg ${
+                currentPage === page ? "bg-blue-500 text-white" : "bg-white"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 border rounded-lg disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
