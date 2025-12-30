@@ -23,7 +23,7 @@ export function useProctoring(
 
   const addViolation = (type: string) => {
     const last = lastViolationRef.current[type] || 0;
-    if (Date.now() - last > 5000) {
+    if (Date.now() - last > 1000) {
       lastViolationRef.current[type] = Date.now();
       setViolations((v) => [
         ...v,

@@ -4,82 +4,126 @@ type SoundViolationCallback = (type: string) => void;
 
 export function useSoundProctor(
   onViolation: SoundViolationCallback,
-  examStarted: boolean,
-  volumeThreshold = 0.08 // tweak if needed
+  examStarted: boolean
 ) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const dataArrayRef = useRef<Float32Array | null>(null);
 
-  const soundStartRef = useRef<number | null>(null);
+  const baselineRmsRef = useRef<number | null>(null);
+  const outOfRangeSinceRef = useRef<number | null>(null);
   const lastViolationRef = useRef(0);
+
+  /* 
+     RMS calculation helper
+*/
+  const calculateRms = (data: Float32Array) => {
+    let sumSquares = 0;
+    for (let i = 0; i < data.length; i++) {
+      sumSquares += data[i] * data[i];
+    }
+    return Math.sqrt(sumSquares / data.length);
+  };
+
+  /* 
+     Dynamic range (from Whisper)
+ */
+  const calculateAmplitudeRange = (rms: number): [number, number] => {
+    const str = rms.toFixed(9);
+    const decimals = str.split(".")[1] || "";
+    const firstNonZero = decimals.search(/[1-9]/);
+
+    const adjustment =
+      firstNonZero !== -1
+        ? parseFloat("0." + "0".repeat(firstNonZero) + "09")
+        : 0.000000001;
+
+    return [
+      Math.max(0, rms - adjustment) / 9,
+      (rms + adjustment) * 50,
+    ];
+  };
 
   useEffect(() => {
     if (!examStarted) return;
 
     let stream: MediaStream;
+    let calibrationStart = Date.now();
+    let calibrationSamples: number[] = [];
 
-    const initAudio = async () => {
+    const init = async () => {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
-
       analyser.fftSize = 2048;
-      analyser.smoothingTimeConstant = 0.8;
 
+      const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
 
-      const bufferLength = analyser.fftSize;
-      const dataArray = new Uint8Array(bufferLength);
+      const dataArray = new Float32Array(analyser.fftSize);
 
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
       dataArrayRef.current = dataArray;
 
-      detectSound();
+      monitor();
     };
 
-    const detectSound = () => {
-      if (!analyserRef.current || !dataArrayRef.current || !examStarted) return;
+    const monitor = () => {
+      if (!analyserRef.current || !dataArrayRef.current) return;
 
-      // Get time domain data for RMS calculation
-      analyserRef.current.getByteTimeDomainData(dataArrayRef.current);
+      analyserRef.current.getFloatTimeDomainData(dataArrayRef.current);
+      const rms = calculateRms(dataArrayRef.current);
 
-      // Calculate RMS (Root Mean Square)
-      let sumSquares = 0;
-      for (let i = 0; i < dataArrayRef.current.length; i++) {
-        const normalized = (dataArrayRef.current[i] - 128) / 128; // Normalize to -1 to 1
-        sumSquares += normalized * normalized;
-      }
-      const rms = Math.sqrt(sumSquares / dataArrayRef.current.length);
+      /* 
+         Calibration phase (5 sec)
+ */
+      if (!baselineRmsRef.current) {
+        calibrationSamples.push(rms);
 
-      if (rms > volumeThreshold) {
-        if (!soundStartRef.current) {
-          soundStartRef.current = Date.now();
+        if (Date.now() - calibrationStart > 5000) {
+          baselineRmsRef.current =
+            calibrationSamples.reduce((a, b) => a + b, 0) /
+            calibrationSamples.length;
         }
 
-        // Sound lasting > 3 seconds
+        requestAnimationFrame(monitor);
+        return;
+      }
+
+      /*
+         Detection phase
+     */
+      const [min, max] = calculateAmplitudeRange(baselineRmsRef.current);
+      const inRange = rms >= min && rms <= max;
+
+      if (!inRange) {
+        if (!outOfRangeSinceRef.current) {
+          outOfRangeSinceRef.current = Date.now();
+        }
+
+        // Out of range for 3 seconds
         if (
-          Date.now() - soundStartRef.current > 3000 &&
+          Date.now() - outOfRangeSinceRef.current > 3000 &&
           Date.now() - lastViolationRef.current > 5000
         ) {
           onViolation("VOICE_DETECTED");
           lastViolationRef.current = Date.now();
         }
       } else {
-        soundStartRef.current = null;
+        outOfRangeSinceRef.current = null;
       }
 
-      requestAnimationFrame(detectSound);
+      requestAnimationFrame(monitor);
     };
 
-    initAudio();
+    init();
 
     return () => {
-      stream?.getTracks().forEach((t) => t.stop());
+      stream?.getTracks().forEach(t => t.stop());
       audioContextRef.current?.close();
+      baselineRmsRef.current = null;
     };
-  }, [examStarted, onViolation, volumeThreshold]);
+  }, [examStarted, onViolation]);
 }

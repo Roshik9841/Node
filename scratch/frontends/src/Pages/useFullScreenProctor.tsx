@@ -14,9 +14,7 @@ type Props = {
 export function useFullScreenProctor({ violations, addViolation, examStarted }: Props) {
   const allowExitRef = useRef(false);
 
-  /* ===========================
-     ▶️ START EXAM (USER CLICK)
-  ============================ */
+
   const startProctoring = () => {
     allowExitRef.current = false;
 
@@ -29,17 +27,15 @@ export function useFullScreenProctor({ violations, addViolation, examStarted }: 
     }
   };
 
-  /* ===========================
-     ⏹ STOP EXAM
-  ============================ */
+
   const stopProctoring = () => {
     allowExitRef.current = true;
-    // Optional: do NOT force exit fullscreen (safer)
+    
   };
 
-  /* ===========================
-     ⛔ Restricted Keys
-  ============================ */
+  /* 
+      Restricted Keys
+ */
   useEffect(() => {
     if (!examStarted) return;
 
@@ -69,9 +65,7 @@ export function useFullScreenProctor({ violations, addViolation, examStarted }: 
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [addViolation, examStarted]);
 
-  /* ===========================
-     🖱 Right Click
-  ============================ */
+ 
   useEffect(() => {
     if (!examStarted) return;
 
